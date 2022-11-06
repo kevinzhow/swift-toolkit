@@ -211,9 +211,11 @@ final class PaginationView: UIView, Loggable {
             }
         }
 
-        loadNextPage {
-            self.delegate?.paginationViewDidUpdateViews(self)
-            completion()
+        loadNextPage { [weak self] in
+            if let self = self {
+                self.delegate?.paginationViewDidUpdateViews(self)
+                completion()
+            }
         }
     }
 
@@ -300,7 +302,16 @@ final class PaginationView: UIView, Loggable {
         guard 0..<pageCount ~= index else {
             return false
         }
+        
+        if currentIndex == index {
+            scrollToView(at: index, location: location, completion: completion)
+        } else {
+            fadeToView(at: index, location: location, animated: animated, completion: completion)
+        }
+        return true
+    }
 
+    private func fadeToView(at index: Int, location: PageLocation, animated: Bool, completion: @escaping () -> Void) {
         func fade(to alpha: CGFloat, completion: @escaping () -> ()) {
             if animated {
                 UIView.animate(withDuration: 0.15, animations: {
@@ -317,10 +328,8 @@ final class PaginationView: UIView, Loggable {
                 fade(to: 1, completion: completion)
             }
         }
-
-        return true
     }
-
+    
     private func scrollToView(at index: Int, location: PageLocation, completion: @escaping () -> Void) {
         guard currentIndex != index else {
             if let view = currentView {

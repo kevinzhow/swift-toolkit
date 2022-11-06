@@ -35,7 +35,13 @@ final class EPUBReflowableSpreadView: EPUBSpreadView {
 
     override func setupWebView() {
         super.setupWebView()
+        
         scrollView.bounces = false
+        // Since iOS 16, the default value of alwaysBounceX seems to be true
+        // for web views.
+        scrollView.alwaysBounceVertical = false
+        scrollView.alwaysBounceHorizontal = false
+
         scrollView.isPagingEnabled = !isScrollEnabled
         
         webView.translatesAutoresizingMaskIntoConstraints = false
@@ -321,9 +327,11 @@ final class EPUBReflowableSpreadView: EPUBSpreadView {
     
     // Called by the javascript code to notify that scrolling ended.
     private func progressionDidChange(_ body: Any) {
-        guard spreadLoaded, let bodyString = body as? String, let newProgression = Double(bodyString) else {
+        guard spreadLoaded, let bodyString = body as? String, var newProgression = Double(bodyString) else {
             return
         }
+        newProgression = min(max(newProgression, 0.0), 1.0)
+        
         if previousProgression == nil {
             previousProgression = progression
         }
