@@ -1,12 +1,12 @@
 Pod::Spec.new do |s|
   
   s.name         = 'R2Shared'
-  s.version      = '2.4.0'
+  s.version      = '2.5.0'
   s.license      = 'BSD 3-Clause License'
   s.summary      = 'R2 Shared'
   s.homepage     = 'http://readium.github.io'
   s.author       = { "Readium" => "contact@readium.org" }
-  s.source       = { :git => 'https://github.com/readium/swift-toolkit.git', :tag => "2.4.0" }
+  s.source       = { :git => 'https://github.com/readium/swift-toolkit.git', :tag => "2.5.0" }
   s.exclude_files = ["Sources/Shared/Toolkit/Archive/ZIPFoundation.swift"]
   s.requires_arc = true
   s.resource_bundles = {
@@ -22,5 +22,6 @@ Pod::Spec.new do |s|
   s.dependency 'Fuzi', '~> 3.0'
   s.dependency 'Minizip', '~> 1.0'
   s.dependency 'SwiftSoup', '~> 2.0'
+  s.dependency 'ReadiumInternal'
 
 end

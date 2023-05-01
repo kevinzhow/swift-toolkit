@@ -46,9 +46,9 @@ struct EPUBSpread: Loggable {
     /// Links for the resources in the spread, from left to right.
     var linksLTR: [Link] {
         switch readingProgression {
-        case .ltr, .ttb, .auto:
+        case .ltr:
             return links
-        case .rtl, .btt:
+        case .rtl:
             return links.reversed()
         }
     }
@@ -92,9 +92,9 @@ struct EPUBSpread: Loggable {
     ///   - link: Link object of the resource in the Publication
     ///   - url: Full URL to the resource.
     ///   - page [left|center|right]: (optional) Page position of the linked resource in the spread.
-    func json(for publication: Publication) -> [[String: Any]] {
+    func json(forBaseURL baseURL: URL) -> [[String: Any]] {
         func makeLinkJSON(_ link: Link, page: Presentation.Page? = nil) -> [String: Any]? {
-            guard let url = link.url(relativeTo: publication.baseURL) else {
+            guard let url = link.url(relativeTo: baseURL) else {
                 log(.error, "Can't get URL for link \(link.href)")
                 return nil
             }
@@ -118,8 +118,8 @@ struct EPUBSpread: Loggable {
         return json.compactMap { $0 }
     }
     
-    func jsonString(for publication: Publication) -> String {
-        return serializeJSONString(json(for: publication)) ?? "[]"
+    func jsonString(forBaseURL baseURL: URL) -> String {
+        return serializeJSONString(json(forBaseURL: baseURL)) ?? "[]"
     }
 
 
@@ -127,22 +127,23 @@ struct EPUBSpread: Loggable {
     ///
     /// - Parameters:
     ///   - publication: The publication to paginate.
-    ///   - userSettings: The host app user settings, to determine the user preference regarding spreads.
     ///   - isLandscape: Whether the navigator viewport is in landscape or portrait.
-    static func pageCountPerSpread(for publication: Publication, userSettings: UserSettings, isLandscape: Bool) -> PageCount {
-        var setting = spreadSetting(in: userSettings)
-        if setting == .auto, let publicationSetting = publication.metadata.presentation.spread {
-            setting = publicationSetting
-        }
-        
-        switch setting {
-        case .none:
+    static func pageCountPerSpread(for publication: Publication, spread: Spread, isLandscape: Bool) -> PageCount {
+        switch spread {
+        case .never:
             return .one
-        case .both:
+        case .always:
             return .two
-        // FIXME: We consider that .auto means a 2p spread in landscape, and 1p in portrait. But this default should probably be customizable by the host app.
-        case .auto, .landscape:
-            return isLandscape ? .two : .one
+        case .auto:
+            switch publication.metadata.presentation.spread ?? .auto {
+            case .both:
+                return .two
+            case .none:
+                return .one
+            // FIXME: We consider that .auto means a 2p spread in landscape, and 1p in portrait. But this default should probably be customizable by the host app.
+            case .auto, .landscape:
+                return isLandscape ? .two : .one
+            }
         }
     }
     

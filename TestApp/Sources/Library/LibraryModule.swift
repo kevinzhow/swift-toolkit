@@ -29,15 +29,13 @@ protocol LibraryModuleAPI {
     /// Imports a new publication to the library, either from:
     /// - a local file URL
     /// - a remote URL which will be downloaded
-    func importPublication(from url: URL, sender: UIViewController) -> AnyPublisher<Book, LibraryError>
-
+    func importPublication(from url: URL, sender: UIViewController) async throws -> Book
 }
 
 protocol LibraryModuleDelegate: ModuleDelegate {
     
     /// Called when the user tap on a publication in the library.
-    func libraryDidSelectPublication(_ publication: Publication, book: Book, completion: @escaping () -> Void)
-
+    func libraryDidSelectPublication(_ publication: Publication, book: Book)
 }
 
 
@@ -49,8 +47,8 @@ final class LibraryModule: LibraryModuleAPI {
     private let factory: LibraryFactory
     private var subscriptions = Set<AnyCancellable>()
 
-    init(delegate: LibraryModuleDelegate?, books: BookRepository, server: PublicationServer, httpClient: HTTPClient) {
-        self.library = LibraryService(books: books, publicationServer: server, httpClient: httpClient)
+    init(delegate: LibraryModuleDelegate?, books: BookRepository, httpClient: HTTPClient) {
+        self.library = LibraryService(books: books, httpClient: httpClient)
         self.factory = LibraryFactory(libraryService: library)
         self.delegate = delegate
     }
@@ -65,7 +63,7 @@ final class LibraryModule: LibraryModuleAPI {
         return library
     }()
     
-    func importPublication(from url: URL, sender: UIViewController) -> AnyPublisher<Book, LibraryError> {
-        library.importPublication(from: url, sender: sender)
+    func importPublication(from url: URL, sender: UIViewController) async throws -> Book {
+        try await library.importPublication(from: url, sender: sender)
     }
 }

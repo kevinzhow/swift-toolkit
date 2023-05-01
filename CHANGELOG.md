@@ -4,7 +4,69 @@ All notable changes to this project will be documented in this file. Take a look
 
 **Warning:** Features marked as *alpha* may change or be removed in a future release without notice. Use with caution.
 
-<!--## [Unreleased]-->
+<!-- ## [Unreleased] -->
+
+## [2.5.0]
+
+### Added
+
+#### Streamer
+
+* Positions computation, TTS and search is now enabled for Readium Web Publications conforming to the [EPUB profile](https://readium.org/webpub-manifest/profiles/epub.html).
+
+#### Navigator
+
+* New `VisualNavigatorDelegate` APIs to handle keyboard events (contributed by [@lukeslu](https://github.com/readium/swift-toolkit/pull/267)).
+    * This can be used to turn pages with the arrow keys, for example.
+* [Support for custom fonts with the EPUB navigator](Documentation/Guides/EPUB%20Fonts.md).
+* A brand new user preferences API for configuring the EPUB and PDF Navigators. This new API is easier and safer to use. To learn how to integrate it in your app, [please refer to the user guide](Documentation/Guides/Navigator%20Preferences.md) and [migration guide](Documentation/Migration%20Guide.md).
+    * New EPUB user preferences:
+        * `fontWeight` - Base text font weight.
+        * `textNormalization` - Normalize font style, weight and variants, which improves accessibility.
+        * `imageFilter` - Filter applied to images in dark theme (darken, invert colors)
+        * `language` - Language of the publication content.
+        * `readingProgression` - Direction of the reading progression across resources, e.g. RTL.
+        * `typeScale` - Scale applied to all element font sizes.
+        * `paragraphIndent` - Text indentation for paragraphs.
+        * `paragraphSpacing` - Vertical margins for paragraphs.
+        * `hyphens` - Enable hyphenation.
+        * `ligatures` - Enable ligatures in Arabic.
+    * New PDF user preferences:
+        * `backgroundColor` - Background color behind the document pages.
+        * `offsetFirstPage` - Indicate if the first page should be displayed in its own spread.
+        * `pageSpacing` - Spacing between pages in points.
+        * `readingProgression` - Direction of the reading progression across resources, e.g. RTL.
+        * `scrollAxis` - Scrolling direction when `scroll` is enabled.
+        * `scroll` - Indicate if pages should be handled using scrolling instead of pagination.
+        * `spread` - Enable dual-page mode.
+        * `visibleScrollbar` - Indicate whether the scrollbar should be visible while scrolling.
+* The new `DirectionalNavigationAdapter` component helps you to turn pages with the arrows and space keyboard keys or taps on the edge of the screen.
+
+### Deprecated
+
+#### Streamer
+
+* `PublicationServer` is deprecated. See the [the migration guide](Documentation/Migration%20Guide.md#2.5.0) to migrate the HTTP server.
+
+#### Navigator
+
+* The EPUB `UserSettings` component is deprecated and replaced by the new Preferences API. [Take a look at the user guide](Documentation/Guides/Navigator%20Preferences.md) and [migration guide](Documentation/Migration%20Guide.md).
+
+### Changed
+
+#### Navigator
+
+* The `define` editing action replaces `lookup` on iOS 16+. When enabled, it will show both the "Look Up" and "Search Web" menu items.
+* Prevent navigation in the EPUB while it is being loaded.
+
+### Fixed
+
+#### Navigator
+
+* Fixed a race condition issue with the `AVTTSEngine`, when pausing utterances.
+* Fixed crash with `PublicationSpeechSynthesizer`, when the currently played word cannot be resolved.
+* Fixed EPUB tap event sent twice when using a mouse (e.g. on Apple Silicon or with a mouse on an iPad).
+
 
 ## [2.4.0]
 
@@ -470,3 +532,4 @@ progression. Now if no reading progression is set, the `effectiveReadingProgress
 [unreleased]: https://github.com/readium/swift-toolkit/compare/main...HEAD
 [2.3.0]: https://github.com/readium/swift-toolkit/compare/2.2.0...2.3.0
 [2.4.0]: https://github.com/readium/swift-toolkit/compare/2.3.0...2.4.0
+[2.5.0]: https://github.com/readium/swift-toolkit/compare/2.4.0...2.5.0

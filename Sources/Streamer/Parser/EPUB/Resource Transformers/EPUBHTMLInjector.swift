@@ -13,6 +13,8 @@ import Foundation
 import R2Shared
 import Fuzi
 
+// FIXME: To remove in Readium 3.0. This was replaced by `ReadiumCSS` in the Navigator.
+
 /// Applies various CSS injections in reflowable EPUB resources.
 final class EPUBHTMLInjector {
     
@@ -25,8 +27,12 @@ final class EPUBHTMLInjector {
     }
     
     func inject(resource: Resource) -> Resource {
-        // We only transform HTML resources.
-        guard resource.link.mediaType.isHTML else {
+        guard
+            // Will be empty when the new Settings API is in use.
+            !userProperties.properties.isEmpty,
+            // We only transform HTML resources.
+            resource.link.mediaType.isHTML
+        else {
             return resource
         }
 
@@ -62,6 +68,7 @@ final class EPUBHTMLInjector {
             }
 
             if isReflowable, let headStart = content.endIndex(of: "<head>") {
+                // FIXME: Readium 3.0 OpenDyslexic should be handled in the navigator.
                 content = content.insert(string: """
                     <meta name="viewport" content="width=device-width, height=device-height, initial-scale=1.0;"/>
                     <style type="text/css">@font-face{font-family: "OpenDyslexic"; src:url("/fonts/OpenDyslexic-Regular.otf") format("opentype");}</style>

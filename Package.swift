@@ -17,6 +17,9 @@ let package = Package(
         .library(name: "R2Navigator", targets: ["R2Navigator"]),
         .library(name: "ReadiumOPDS", targets: ["ReadiumOPDS"]),
         .library(name: "ReadiumLCP", targets: ["ReadiumLCP"]),
+
+        // Adapters to third-party dependencies.
+        .library(name: "ReadiumAdapterGCDWebServer", targets: ["ReadiumAdapterGCDWebServer"]),
     ],
     dependencies: [
         .package(url: "https://github.com/cezheng/Fuzi.git", from: "3.1.3"),
@@ -26,14 +29,15 @@ let package = Package(
         .package(url: "https://github.com/ra1028/DifferenceKit.git", from: "1.3.0"),
         .package(url: "https://github.com/readium/GCDWebServer.git", from: "3.7.3"),
         .package(url: "https://github.com/scinfu/SwiftSoup.git", from: "2.4.3"),
-        .package(url: "https://github.com/stephencelis/SQLite.swift.git", from: "0.13.3"),
+        // 0.14 introduced a breaking change
+        .package(url: "https://github.com/stephencelis/SQLite.swift.git", "0.12.0"..<"0.13.3"),
         // 0.9.12 requires iOS 12+
         .package(url: "https://github.com/weichsel/ZIPFoundation.git", "0.9.0"..<"0.9.12"),
     ],
     targets: [
         .target(
             name: "R2Shared",
-            dependencies: ["Fuzi", "SwiftSoup", "Zip"],
+            dependencies: ["ReadiumInternal", "Fuzi", "SwiftSoup", "Zip"],
             path: "Sources/Shared",
             exclude: [
                 // Support for ZIPFoundation is not yet achieved.
@@ -82,9 +86,10 @@ let package = Package(
         .target(
             name: "R2Navigator",
             dependencies: [
+                "ReadiumInternal",
+                "R2Shared",
                 "DifferenceKit",
                 "SwiftSoup",
-                "R2Shared"
             ],
             path: "Sources/Navigator",
             exclude: [
@@ -141,6 +146,25 @@ let package = Package(
         //         .copy("Fixtures"),
         //     ]
         // ),
+        
+        .target(
+            name: "ReadiumAdapterGCDWebServer",
+            dependencies: [
+                "GCDWebServer",
+                "R2Shared",
+            ],
+            path: "Sources/Adapters/GCDWebServer"
+        ),
+
+        .target(
+            name: "ReadiumInternal",
+            path: "Sources/Internal"
+        ),
+        .testTarget(
+            name: "ReadiumInternalTests",
+            dependencies: ["ReadiumInternal"],
+            path: "Tests/InternalTests"
+        ),
     ]
 )
 
