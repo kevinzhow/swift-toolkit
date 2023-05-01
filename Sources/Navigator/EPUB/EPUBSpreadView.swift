@@ -113,6 +113,12 @@ class EPUBSpreadView: UIView, Loggable, PageView {
         scrollView.backgroundColor = UIColor.clear
         
         webView.allowsBackForwardNavigationGestures = false
+        
+        #if DEBUG
+            if #available(iOS 16.4, *) {
+                webView.isInspectable = true
+            }
+        #endif
 
         scrollView.showsHorizontalScrollIndicator = false
         scrollView.showsVerticalScrollIndicator = false
