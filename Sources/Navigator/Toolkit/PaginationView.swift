@@ -30,7 +30,7 @@ enum PageLocation: Equatable {
     
 }
 
-protocol PageView {
+public protocol PageView {
     /// Moves the page to the given internal location.
     func go(to location: PageLocation, completion: (() -> Void)?)
 }
@@ -54,21 +54,21 @@ protocol PaginationViewDelegate: AnyObject {
     func paginationView(_ paginationView: PaginationView, positionCountAtIndex index: Int) -> Int
 }
 
-final class PaginationView: UIView, Loggable {
+public final class PaginationView: UIView, Loggable {
     
     weak var delegate: PaginationViewDelegate?
 
     /// Total number of page views to be paginated.
-    private(set) var pageCount: Int = 0
+    public private(set) var pageCount: Int = 0
     
     /// Index of the page currently being displayed.
-    private(set) var currentIndex: Int = 0
+    public private(set) var currentIndex: Int = 0
 
     /// Direction for the reading progression.
-    private(set) var readingProgression: ReadingProgression = .ltr
+    public private(set) var readingProgression: ReadingProgression = .ltr
     
     /// Pre-loaded page views, indexed by their position.
-    private(set) var loadedViews: [Int: (UIView & PageView)] = [:]
+    public private(set) var loadedViews: [Int: (UIView & PageView)] = [:]
     
     /// Number of positions (as in `Publication.positionList`) to preload before and after the
     /// current page.
@@ -84,12 +84,12 @@ final class PaginationView: UIView, Loggable {
     }
 
     /// Return the currently presented page view from the Views array.
-    var currentView: (UIView & PageView)? {
+    public var currentView: (UIView & PageView)? {
         return loadedViews[currentIndex]
     }
     
     /// Loaded page views in reading order.
-    private var orderedViews: [UIView & PageView] {
+    public var orderedViews: [UIView & PageView] {
         var orderedViews = loadedViews
             .sorted { $0.key < $1.key }
             .map { $0.value }
@@ -101,7 +101,7 @@ final class PaginationView: UIView, Loggable {
         return orderedViews
     }
 
-    private let scrollView = UIScrollView()
+    public let scrollView = UIScrollView()
     
     init(frame: CGRect, preloadPreviousPositionCount: Int, preloadNextPositionCount: Int) {
         self.preloadPreviousPositionCount = preloadPreviousPositionCount

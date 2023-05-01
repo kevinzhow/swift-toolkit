@@ -505,7 +505,7 @@ open class EPUBNavigatorViewController: UIViewController,
     
     // MARK: - Pagination and spreads
     
-    private lazy var paginationView: PaginationView = {
+    public lazy var paginationView: PaginationView = {
         let hasPositions = !publication.positions.isEmpty
         let view = PaginationView(
             frame: .zero,
@@ -520,12 +520,12 @@ open class EPUBNavigatorViewController: UIViewController,
     private var spreads: [EPUBSpread] = []
 
     /// Index of the currently visible spread.
-    private var currentSpreadIndex: Int {
+    public var currentSpreadIndex: Int {
         return paginationView.currentIndex
     }
 
     // Reading order index of the left-most resource in the visible spread.
-    private var currentResourceIndex: Int? {
+    public var currentResourceIndex: Int? {
         guard spreads.indices.contains(currentSpreadIndex) else {
             return nil
         }
