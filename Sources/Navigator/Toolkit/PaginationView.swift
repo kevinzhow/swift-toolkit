@@ -7,7 +7,7 @@
 import UIKit
 import R2Shared
 
-enum PageLocation: Equatable {
+public enum PageLocation: Equatable {
     case start
     case end
     case locator(Locator)
@@ -362,15 +362,15 @@ extension PaginationView: UIScrollViewDelegate {
     /// Note: using this approach might provide a better experience:
     /// https://oleb.net/blog/2014/05/scrollviews-inside-scrollviews/
     
-    func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
+    public func scrollViewWillEndDragging(_ scrollView: UIScrollView, withVelocity velocity: CGPoint, targetContentOffset: UnsafeMutablePointer<CGPoint>) {
         scrollView.isScrollEnabled = false
     }
     
-    func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
+    public func scrollViewDidEndScrollingAnimation(_ scrollView: UIScrollView) {
         scrollView.isScrollEnabled = true
     }
     
-    func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
+    public func scrollViewDidEndDragging(_ scrollView: UIScrollView, willDecelerate decelerate: Bool) {
         if !decelerate {
             scrollView.isScrollEnabled = true
         }
