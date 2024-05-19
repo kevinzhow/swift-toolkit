@@ -1,5 +1,5 @@
 //
-//  Copyright 2023 Readium Foundation. All rights reserved.
+//  Copyright 2024 Readium Foundation. All rights reserved.
 //  Use of this source code is governed by the BSD-style license
 //  available in the top-level LICENSE file of the project.
 //
@@ -9,31 +9,44 @@ import R2Shared
 import SafariServices
 
 public protocol Navigator: AnyObject {
+    /// Publication being rendered.
+    var publication: Publication { get }
+
     /// Current position in the publication.
     /// Can be used to save a bookmark to the current position.
     var currentLocation: Locator? { get }
 
-    /// Moves to the position in the publication correponding to the given `Locator`.
+    /// Moves to the position in the publication correponding to the given
+    /// `Locator`.
+    ///
     /// - Parameter completion: Called when the transition is completed.
-    /// - Returns: Whether the navigator is able to move to the locator. The completion block is only called if true was returned.
+    /// - Returns: Whether the navigator is able to move to the locator. The
+    ///   completion block is only called if true was returned.
     @discardableResult
     func go(to locator: Locator, animated: Bool, completion: @escaping () -> Void) -> Bool
 
     /// Moves to the position in the publication targeted by the given link.
     /// - Parameter completion: Called when the transition is completed.
-    /// - Returns: Whether the navigator is able to move to the locator. The completion block is only called if true was returned.
+    /// - Returns: Whether the navigator is able to move to the locator. The
+    ///   completion block is only called if true was returned.
     @discardableResult
     func go(to link: Link, animated: Bool, completion: @escaping () -> Void) -> Bool
 
-    /// Moves to the next content portion (eg. page) in the reading progression direction.
+    /// Moves to the next content portion (eg. page or audiobook resource) in
+    /// the reading progression direction.
+    ///
     /// - Parameter completion: Called when the transition is completed.
-    /// - Returns: Whether the navigator is able to move to the next content portion. The completion block is only called if true was returned.
+    /// - Returns: Whether the navigator is able to move to the next content
+    ///   portion. The completion block is only called if true was returned.
     @discardableResult
     func goForward(animated: Bool, completion: @escaping () -> Void) -> Bool
 
-    /// Moves to the previous content portion (eg. page) in the reading progression direction.
+    /// Moves to the previous content portion (eg. page or audiobook resource)
+    /// in the reading progression direction.
+    ///
     /// - Parameter completion: Called when the transition is completed.
-    /// - Returns: Whether the navigator is able to move to the previous content portion. The completion block is only called if true was returned.
+    /// - Returns: Whether the navigator is able to move to the previous content
+    ///   portion. The completion block is only called if true was returned.
     @discardableResult
     func goBackward(animated: Bool, completion: @escaping () -> Void) -> Bool
 }
@@ -90,6 +103,9 @@ public protocol NavigatorDelegate: AnyObject {
     /// note yourself, using its `content`. `link.type` contains information about the
     /// format of `content` and `referrer`, such as `text/html`.
     func navigator(_ navigator: Navigator, shouldNavigateToNoteAt link: Link, content: String, referrer: String?) -> Bool
+
+    /// Called when an error occurs while attempting to load a resource.
+    func navigator(_ navigator: Navigator, didFailToLoadResourceAt href: String, withError error: ResourceError)
 }
 
 public extension NavigatorDelegate {
@@ -104,6 +120,8 @@ public extension NavigatorDelegate {
     func navigator(_ navigator: Navigator, shouldNavigateToNoteAt link: Link, content: String, referrer: String?) -> Bool {
         true
     }
+
+    func navigator(_ navigator: Navigator, didFailToLoadResourceAt href: String, withError error: ResourceError) {}
 }
 
 public enum NavigatorError: LocalizedError {

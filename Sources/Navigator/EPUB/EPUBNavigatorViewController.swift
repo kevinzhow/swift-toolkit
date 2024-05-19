@@ -1,5 +1,5 @@
 //
-//  Copyright 2023 Readium Foundation. All rights reserved.
+//  Copyright 2024 Readium Foundation. All rights reserved.
 //  Use of this source code is governed by the BSD-style license
 //  available in the top-level LICENSE file of the project.
 //
@@ -142,8 +142,10 @@ open class EPUBNavigatorViewController: UIViewController,
 
     /// Navigation state.
     private enum State: Equatable {
-        /// Loading the spreads, for example after changing the user settings or loading the publication.
-        case loading
+        /// Loading the spreads at the `pendingLocator`, for example after
+        /// changing the user settings, rotating the screen or loading the
+        /// publication.
+        case loading(pendingLocator: Locator?)
         /// Waiting for further navigation instructions.
         case idle
         /// Jumping to `pendingLocator`.
@@ -151,11 +153,25 @@ open class EPUBNavigatorViewController: UIViewController,
         /// Turning the page in the given `direction`.
         case moving(direction: EPUBSpreadView.Direction)
 
+        var pendingLocator: Locator? {
+            switch self {
+            case let .loading(pendingLocator: locator):
+                return locator
+            case let .jumping(pendingLocator: locator):
+                return locator
+            default:
+                return nil
+            }
+        }
+
         mutating func transition(_ event: Event) -> Bool {
             switch (self, event) {
+            // Loading the spreads is always possible, because it can be triggered by rotating the
+            // screen. In which case it cancels any on-going state.
+            case let (_, .load(locator)):
+                self = .loading(pendingLocator: locator)
+
             // All events are ignored when loading spreads, except for `loaded` and `load`.
-            case (.loading, .load):
-                return true
             case (.loading, .loaded):
                 self = .idle
             case (.loading, _):
@@ -180,11 +196,6 @@ open class EPUBNavigatorViewController: UIViewController,
                  (.moving, .move):
                 return false
 
-            // Loading the spreads is always possible, because it can be triggered by rotating the
-            // screen. In which case it cancels any on-going state.
-            case (_, .load):
-                self = .loading
-
             default:
                 log(.error, "Invalid event \(event) for state \(self)")
                 return false
@@ -196,8 +207,9 @@ open class EPUBNavigatorViewController: UIViewController,
 
     /// Navigation event.
     private enum Event: Equatable {
-        /// Load the spreads, for example after changing the user settings or loading the publication.
-        case load
+        /// Load the spreads at the given locator, for example after changing
+        /// the user settings, rotating the screen or loading the publication.
+        case load(Locator?)
         /// The spreads were loaded.
         case loaded
         /// Jump to the given locator.
@@ -211,7 +223,7 @@ open class EPUBNavigatorViewController: UIViewController,
     }
 
     /// Current navigation state.
-    private var state: State = .loading {
+    private var state: State = .loading(pendingLocator: nil) {
         didSet {
             if config.debugState {
                 log(.debug, "* transitioned to \(state)")
@@ -228,18 +240,34 @@ open class EPUBNavigatorViewController: UIViewController,
     }
 
     private let initialLocation: Locator?
+    private let readingOrder: [Link]
+    private let positionsByReadingOrder: [[Locator]]
 
     private let viewModel: EPUBNavigatorViewModel
-    private var publication: Publication { viewModel.publication }
+    public var publication: Publication { viewModel.publication }
 
     var config: Configuration { viewModel.config }
 
+    /// Creates a new instance of `EPUBNavigatorViewController`.
+    ///
+    /// - Parameters:
+    ///   - publication: EPUB publication to render.
+    ///   - initialLocation: Starting location in the publication, defaults to
+    ///   the beginning.
+    ///   - readingOrder: Custom order of resources to display. Used for example
+    ///   to display a non-linear resource on its own.
+    ///   - config: Additional navigator configuration.
+    ///   - httpServer: HTTP server used to serve the publication resources to
+    ///   the web views.
     public convenience init(
         publication: Publication,
         initialLocation: Locator?,
+        readingOrder: [Link]? = nil,
         config: Configuration = .init(),
         httpServer: HTTPServer
     ) throws {
+        precondition(readingOrder.map { !$0.isEmpty } ?? true)
+
         guard !publication.isRestricted else {
             throw EPUBError.publicationRestricted
         }
@@ -250,7 +278,18 @@ open class EPUBNavigatorViewController: UIViewController,
             httpServer: httpServer
         )
 
-        self.init(viewModel: viewModel, initialLocation: initialLocation)
+        self.init(
+            viewModel: viewModel,
+            initialLocation: initialLocation,
+            readingOrder: readingOrder ?? publication.readingOrder,
+            positionsByReadingOrder:
+            // Positions and total progression only make sense in the context
+            // of the publication's actual reading order. Therefore when
+            // provided with a different reading order, we should assume the
+            // positions list is empty, and also not compute the
+            // totalProgression when calculating the current locator.
+            (readingOrder != nil) ? [] : publication.positionsByReadingOrder
+        )
     }
 
     @available(*, deprecated, message: "See the 2.5.0 migration guide to migrate the HTTP server and settings API")
@@ -268,15 +307,24 @@ open class EPUBNavigatorViewController: UIViewController,
                 config: config,
                 resourcesServer: resourcesServer
             ),
-            initialLocation: initialLocation
+            initialLocation: initialLocation,
+            readingOrder: publication.readingOrder,
+            positionsByReadingOrder: publication.positionsByReadingOrder
         )
 
         userSettings = config.userSettings
     }
 
-    private init(viewModel: EPUBNavigatorViewModel, initialLocation: Locator?) {
+    private init(
+        viewModel: EPUBNavigatorViewModel,
+        initialLocation: Locator?,
+        readingOrder: [Link],
+        positionsByReadingOrder: [[Locator]]
+    ) {
         self.viewModel = viewModel
         self.initialLocation = initialLocation
+        self.readingOrder = readingOrder
+        self.positionsByReadingOrder = positionsByReadingOrder
 
         super.init(nibName: nil, bundle: nil)
 
@@ -292,13 +340,15 @@ open class EPUBNavigatorViewController: UIViewController,
     override open func viewDidLoad() {
         super.viewDidLoad()
 
+        // Will call `accessibilityScroll()` when VoiceOver reaches the end of
+        // the current resource. We can use this to go to the next resource.
+        view.accessibilityTraits.insert(.causesPageTurn)
+
         paginationView.frame = view.bounds
         paginationView.autoresizingMask = [.flexibleHeight, .flexibleWidth]
         view.addSubview(paginationView)
 
         view.addGestureRecognizer(UITapGestureRecognizer(target: self, action: #selector(didTapBackground)))
-
-        viewModel.editingActions.updateSharedMenuController()
 
         reloadSpreads(at: initialLocation, force: false)
 
@@ -313,7 +363,7 @@ open class EPUBNavigatorViewController: UIViewController,
 
     /// Intercepts tap gesture when the web views are not loaded.
     @objc private func didTapBackground(_ gesture: UITapGestureRecognizer) {
-        guard state == .loading else { return }
+        guard case .loading = state else { return }
         didTap(at: gesture.location(in: view))
     }
 
@@ -503,7 +553,7 @@ open class EPUBNavigatorViewController: UIViewController,
 
     // MARK: - Pagination and spreads
     public lazy var paginationView: PaginationView = {
-        let hasPositions = !publication.positions.isEmpty
+        let hasPositions = !positionsByReadingOrder.isEmpty
         let view = PaginationView(
             frame: .zero,
             preloadPreviousPositionCount: hasPositions ? config.preloadPreviousPositionCount : 0,
@@ -527,7 +577,7 @@ open class EPUBNavigatorViewController: UIViewController,
             return nil
         }
 
-        return publication.readingOrder.firstIndex(withHREF: spreads[currentSpreadIndex].left.href)
+        return readingOrder.firstIndex(withHREF: spreads[currentSpreadIndex].left.href)
     }
 
     private let reloadSpreadsCompletions = CompletionList()
@@ -558,18 +608,20 @@ open class EPUBNavigatorViewController: UIViewController,
     }
 
     private func _reloadSpreads(at locator: Locator? = nil, force: Bool, completion: @escaping () -> Void) {
+        let locator = locator ?? currentLocation
+
         guard
             // Already loaded with the expected amount of spreads?
             force || spreads.first?.spread != viewModel.spreadEnabled,
-            on(.load)
+            on(.load(locator))
         else {
             completion()
             return
         }
 
-        let locator = locator ?? currentLocation
         spreads = EPUBSpread.makeSpreads(
             for: publication,
+            readingOrder: readingOrder,
             readingProgression: viewModel.readingProgression,
             spread: viewModel.spreadEnabled
         )
@@ -622,7 +674,7 @@ open class EPUBNavigatorViewController: UIViewController,
 
     public var currentLocation: Locator? {
         // Returns any pending locator to prevent returning invalid locations while loading it.
-        if case let .jumping(pendingLocator) = state {
+        if let pendingLocator = state.pendingLocator {
             return pendingLocator
         }
 
@@ -634,11 +686,12 @@ open class EPUBNavigatorViewController: UIViewController,
         let href = link.href
         let progression = min(max(spreadView.progression(in: href), 0.0), 1.0)
 
-        // The positions are not always available, for example a Readium WebPub doesn't have any
-        // unless a Publication Positions Web Service is provided.
         if
-            let index = publication.readingOrder.firstIndex(withHREF: href),
-            let positionList = Optional(publication.positionsByReadingOrder[index]),
+            // The positions are not always available, for example a Readium
+            // WebPub doesn't have any unless a Publication Positions Web
+            // Service is provided
+            let index = readingOrder.firstIndex(withHREF: href),
+            let positionList = positionsByReadingOrder.getOrNil(index),
             positionList.count > 0
         {
             // Gets the current locator from the positionList, and fill its missing data.
@@ -839,6 +892,27 @@ open class EPUBNavigatorViewController: UIViewController,
         }
         spreadView.evaluateScript(script, completion: completion)
     }
+
+    // MARK: - UIAccessibilityAction
+
+    override open func accessibilityScroll(_ direction: UIAccessibilityScrollDirection) -> Bool {
+        guard !super.accessibilityScroll(direction) else {
+            return true
+        }
+
+        switch direction {
+        case .right:
+            return goLeft(animated: false)
+        case .left:
+            return goRight(animated: false)
+        case .next, .down:
+            return goForward(animated: false)
+        case .previous, .up:
+            return goBackward(animated: false)
+        @unknown default:
+            return false
+        }
+    }
 }
 
 extension EPUBNavigatorViewController: EPUBNavigatorViewModelDelegate {
@@ -867,6 +941,16 @@ extension EPUBNavigatorViewController: EPUBNavigatorViewModelDelegate {
                 view.evaluateScript(script, inHREF: href)
                 return
             }
+        }
+    }
+
+    func epubNavigatorViewModel(
+        _ viewModel: EPUBNavigatorViewModel,
+        didFailToLoadResourceAt href: String,
+        withError error: ResourceError
+    ) {
+        DispatchQueue.main.async {
+            self.delegate?.navigator(self, didFailToLoadResourceAt: href, withError: error)
         }
     }
 }
@@ -946,6 +1030,11 @@ extension EPUBNavigatorViewController: EPUBSpreadViewDelegate {
     }
 
     func spreadView(_ spreadView: EPUBSpreadView, didTapOnInternalLink href: String, clickEvent: ClickEvent?) {
+        guard let link = publication.link(withHREF: href)?.copy(href: href) else {
+            log(.warning, "Cannot find link with HREF: \(href)")
+            return
+        }
+
         // Check to see if this was a noteref link and give delegate the opportunity to display it.
         if
             let clickEvent = clickEvent,
@@ -955,7 +1044,7 @@ extension EPUBNavigatorViewController: EPUBSpreadViewDelegate {
         {
             if !delegate.navigator(
                 self,
-                shouldNavigateToNoteAt: Link(href: href, type: "text/html"),
+                shouldNavigateToNoteAt: link,
                 content: note,
                 referrer: referrer
             ) {
@@ -963,7 +1052,12 @@ extension EPUBNavigatorViewController: EPUBSpreadViewDelegate {
             }
         }
 
-        go(to: Link(href: href))
+        // Ask if we should navigate to the link
+        if let delegate = delegate, !delegate.navigator(self, shouldNavigateToLink: link) {
+            return
+        }
+
+        go(to: link)
     }
 
     /// Checks if the internal link is a noteref, and retrieves both the referring text of the link and the body of the note.
@@ -1103,6 +1197,6 @@ extension EPUBNavigatorViewController: PaginationViewDelegate {
     }
 
     func paginationView(_ paginationView: PaginationView, positionCountAtIndex index: Int) -> Int {
-        spreads[index].positionCount(in: publication)
+        spreads[index].positionCount(in: readingOrder, positionsByReadingOrder: positionsByReadingOrder)
     }
 }

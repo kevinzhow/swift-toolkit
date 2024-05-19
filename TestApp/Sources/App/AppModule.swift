@@ -1,5 +1,5 @@
 //
-//  Copyright 2023 Readium Foundation. All rights reserved.
+//  Copyright 2024 Readium Foundation. All rights reserved.
 //  Use of this source code is governed by the BSD-style license
 //  available in the top-level LICENSE file of the project.
 //
@@ -38,7 +38,7 @@ final class AppModule {
         opds = OPDSModule(delegate: self)
 
         // Set Readium 2's logging minimum level.
-        R2EnableLog(withMinimumSeverityLevel: .warning)
+        R2EnableLog(withMinimumSeverityLevel: .debug)
     }
 
     private(set) lazy var aboutViewController: UIViewController = {
@@ -50,10 +50,12 @@ final class AppModule {
 
 extension AppModule: ModuleDelegate {
     func presentAlert(_ title: String, message: String, from viewController: UIViewController) {
-        let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
-        let dismissButton = UIAlertAction(title: NSLocalizedString("ok_button", comment: "Alert button"), style: .cancel)
-        alert.addAction(dismissButton)
-        viewController.present(alert, animated: true)
+        DispatchQueue.main.async {
+            let alert = UIAlertController(title: title, message: message, preferredStyle: .alert)
+            let dismissButton = UIAlertAction(title: NSLocalizedString("ok_button", comment: "Alert button"), style: .cancel)
+            alert.addAction(dismissButton)
+            viewController.present(alert, animated: true)
+        }
     }
 
     func presentError(_ error: Error?, from viewController: UIViewController) {

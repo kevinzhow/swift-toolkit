@@ -1,5 +1,5 @@
 //
-//  Copyright 2023 Readium Foundation. All rights reserved.
+//  Copyright 2024 Readium Foundation. All rights reserved.
 //  Use of this source code is governed by the BSD-style license
 //  available in the top-level LICENSE file of the project.
 //
@@ -107,6 +107,12 @@ public protocol VisualNavigatorDelegate: NavigatorDelegate {
     /// Called when the user released a key and it was not handled by the
     /// resource.
     func navigator(_ navigator: VisualNavigator, didReleaseKey event: KeyEvent)
+
+    /// Called when the user taps on an internal link.
+    ///
+    /// Return `true` to navigate to the link, or `false` if you intend to
+    /// present the link yourself
+    func navigator(_ navigator: VisualNavigator, shouldNavigateToLink link: Link) -> Bool
 }
 
 public extension VisualNavigatorDelegate {
@@ -124,5 +130,9 @@ public extension VisualNavigatorDelegate {
 
     func navigator(_ navigator: VisualNavigator, didReleaseKey event: KeyEvent) {
         // Optional
+    }
+
+    func navigator(_ navigator: VisualNavigator, shouldNavigateToLink link: Link) -> Bool {
+        true
     }
 }

@@ -6,6 +6,99 @@ All notable changes to this project will be documented in this file. Take a look
 
 <!-- ## [Unreleased] -->
 
+## [2.7.1]
+
+### Added
+
+* [#417](https://github.com/readium/swift-toolkit/issues/417) Support for the new 2.x LCP Profiles.
+
+
+## [2.7.0]
+
+### Added
+
+#### Shared
+
+* You can now use `DefaultHTTPClientDelegate.httpClient(_:request:didReceive:completion:)` to handle authentication challenges (e.g. Basic) with `DefaultHTTPClient`.
+
+#### Navigator
+
+* The `AudioNavigator` API has been promoted to stable and ships with a new Preferences API.
+* The new `NavigatorDelegate.didFailToLoadResourceAt(_:didFailToLoadResourceAt:withError:)` delegate API notifies when an error occurs while loading a publication resource (contributed by [@ettore](https://github.com/readium/swift-toolkit/pull/400)).
+
+### Fixed
+
+* [#390](https://github.com/readium/swift-toolkit/issues/390) Fixed logger not logging above the minimum severity level (contributed by [@ettore](https://github.com/readium/swift-toolkit/pull/391)).
+
+#### Navigator
+
+* From iOS 13 to 15, PDF text selection is disabled on protected publications disabling the **Copy** editing action.
+* The **Share** editing action is disabled for any protected publication.
+* Fixed starting the TTS from the current EPUB position.
+* [#396](https://github.com/readium/swift-toolkit/issues/396) Ensure we stop the activity indicator when an EPUB resource fails to load correctly (contributed by [@ettore](https://github.com/readium/swift-toolkit/pull/397)).
+
+#### Streamer
+
+* [#399](https://github.com/readium/swift-toolkit/discussions/399) Zipped Audio Books and standalone audio files are now recognized.
+
+
+## [2.6.1]
+
+### Added
+
+#### Navigator
+
+* You can now customize the playback refresh rate of `_AudiobookNavigator` in its configuration.
+* The EPUB navigator automatically moves to the next resource when VoiceOver reaches the end of the current one.
+
+### Changed
+
+#### Navigator
+
+* You should not subclass `PDFNavigatorViewController` anymore. If you need to override `setupPDFView`, you can do so by implementing the `PDFNavigatorDelegate` protocol.
+
+### Fixed
+
+#### Shared
+
+* Zipped Audio Book archives are now detected even if they contain bitmap entries.
+
+#### Navigator
+
+* [#344](https://github.com/readium/swift-toolkit/issues/344) EPUB: Fixed lost position when rotating quickly the screen several times.
+* [#350](https://github.com/readium/swift-toolkit/discussions/350) Restore the ability to subclass the `PDFNavigatorViewController`.
+* Fixed activating the scroll mode when VoiceOver is enabled in the EPUB navigator.
+
+
+## [2.6.0]
+
+* Support for Xcode 15.
+
+### Added
+
+#### Navigator
+
+* The `PublicationSpeechSynthesizer` (TTS) now supports background playback by default.
+    * You will need to enable the **Audio Background Mode** in your app's build info.
+* Support for non-linear EPUB resources with an opt-in in reading apps (contributed by @chrfalch in [#332](https://github.com/readium/swift-toolkit/pull/332) and [#331](https://github.com/readium/swift-toolkit/pull/331)).
+    1. Override loading non-linear resources with `VisualNavigatorDelegate.navigator(_:shouldNavigateToLink:)`.
+    2. Present a new `EPUBNavigatorViewController` by providing a custom `readingOrder` with only this resource to the constructor.
+
+### Fixed
+
+#### Navigator
+
+* Improved performance when adding hundreds of HTML decorations at once.
+* Fixed broadcasting the `PublicationSpeechSynthesizer` with AirPlay when the screen is locked.
+
+### Changed
+
+#### Navigator
+
+* `AudioSession` and `NowPlayingInfo` are now stable!
+* You need to provide the configuration of the Audio Session to the constructor of `PublicationSpeechSynthesizer`, instead of `AVTTSEngine`.
+
+
 ## [2.5.1]
 
 * The Readium toolkit now requires iOS 11.0+.
@@ -575,3 +668,7 @@ progression. Now if no reading progression is set, the `effectiveReadingProgress
 [2.4.0]: https://github.com/readium/swift-toolkit/compare/2.3.0...2.4.0
 [2.5.0]: https://github.com/readium/swift-toolkit/compare/2.4.0...2.5.0
 [2.5.1]: https://github.com/readium/swift-toolkit/compare/2.5.0...2.5.1
+[2.6.0]: https://github.com/readium/swift-toolkit/compare/2.5.1...2.6.0
+[2.6.1]: https://github.com/readium/swift-toolkit/compare/2.6.0...2.6.1
+[2.7.0]: https://github.com/readium/swift-toolkit/compare/2.6.1...2.7.0
+[2.7.1]: https://github.com/readium/swift-toolkit/compare/2.7.0...2.7.1

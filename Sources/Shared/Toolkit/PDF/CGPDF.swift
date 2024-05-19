@@ -1,5 +1,5 @@
 //
-//  Copyright 2023 Readium Foundation. All rights reserved.
+//  Copyright 2024 Readium Foundation. All rights reserved.
 //  Use of this source code is governed by the BSD-style license
 //  available in the top-level LICENSE file of the project.
 //
@@ -282,12 +282,23 @@ public class CGPDFDocumentFactory: PDFDocumentFactory, Loggable {
                 context.offset = 0
             },
 
-            releaseInfo: { _ in }
+            releaseInfo: { info in
+                guard let context = CGPDFDocumentFactory.context(from: info) else {
+                    return
+                }
+                context.resource.close()
+                let info = info?.assumingMemoryBound(to: ResourceContext.self)
+                info?.deinitialize(count: 1)
+                info?.deallocate()
+            }
         )
 
-        var context = ResourceContext(resource: resource)
+        let context = ResourceContext(resource: resource)
+        let contextRef = UnsafeMutablePointer<ResourceContext>.allocate(capacity: 1)
+        contextRef.initialize(to: context)
+
         guard
-            let provider = CGDataProvider(sequentialInfo: &context, callbacks: &callbacks),
+            let provider = CGDataProvider(sequentialInfo: contextRef, callbacks: &callbacks),
             let document = UIKit.CGPDFDocument(provider)
         else {
             throw PDFDocumentError.openFailed

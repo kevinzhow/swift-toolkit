@@ -1,5 +1,5 @@
 //
-//  Copyright 2023 Readium Foundation. All rights reserved.
+//  Copyright 2024 Readium Foundation. All rights reserved.
 //  Use of this source code is governed by the BSD-style license
 //  available in the top-level LICENSE file of the project.
 //
@@ -8,15 +8,15 @@ import Foundation
 import MediaPlayer
 import UIKit
 
+@available(*, deprecated, message: "Use `NowPlayingInfo` instead")
+public typealias _NowPlayingInfo = NowPlayingInfo
+
 /// Manages the Now Playing media item displayed on the lock screen.
 ///
 /// Simply set the `playback` and `media` properties when needed, the calls will automatically be
 /// throttled to avoid updating the Now Playing screen too frequently.
-///
-/// **WARNING:** This API is experimental and may change or be removed in a future release without
-/// notice. Use with caution.
-public final class _NowPlayingInfo {
-    public static let shared = _NowPlayingInfo()
+public final class NowPlayingInfo {
+    public static let shared = NowPlayingInfo()
 
     public struct Media: Equatable {
         /// The title (or name) of the media item.
