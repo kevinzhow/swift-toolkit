@@ -30,6 +30,8 @@ public struct EditingAction: Hashable {
     /// Not available on iOS 16+
     public static let lookup = EditingAction(kind: .native("_lookup:"))
 
+    public static let lookup2 = EditingAction(kind: .native("lookup:"))
+
     /// Look up the text selection in the dictionary (and other sources on
     /// iOS 16+).
     ///
@@ -37,11 +39,17 @@ public struct EditingAction: Hashable {
     /// Search Web.
     public static let define = EditingAction(kind: .native("_define:"))
 
+    public static let define2 = EditingAction(kind: .native("define:"))
+
     /// Translate the text selection.
     public static let translate = EditingAction(kind: .native("_translate:"))
 
+    public static let translate2 = EditingAction(kind: .native("translate:"))
+
     /// Share the text selection.
     public static let share = EditingAction(kind: .native("_share:"))
+
+    public static let share2 = EditingAction(kind: .native("share:"))
 
     /// Create a custom editing action.
     ///

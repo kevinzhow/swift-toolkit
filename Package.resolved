@@ -33,8 +33,8 @@
         "repositoryURL": "https://github.com/readium/GCDWebServer.git",
         "state": {
           "branch": null,
-          "revision": "50caf05df2c70edadce143747c96fcd877fe05bb",
-          "version": "3.7.5"
+          "revision": "c51ffcde677392fef6241a783ffebcad11a5911c",
+          "version": "4.0.0"
         }
       },
       {
