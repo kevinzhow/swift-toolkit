@@ -5,7 +5,7 @@
 //
 
 import Foundation
-import ReadiumShared
+import R2Shared
 import UIKit
 
 /// An `EditingAction` is an item in the text selection menu.

@@ -44,7 +44,11 @@ final class WebView: WKWebView {
     }
 
     override func copy(_ sender: Any?) {
-        editingActions.copy()
+        if #available(iOS 13.0, *) {
+            Task {
+                await editingActions.copy()
+            }
+        }
     }
 
     override func didMoveToWindow() {
