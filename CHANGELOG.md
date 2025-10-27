@@ -11,6 +11,12 @@ All notable changes to this project will be documented in this file. Take a look
 * Added `VisualNavigatorDelegate.navigatorContentInset(_:)` to customize the content and safe-area insets used by the navigator.
     * By default, the navigator uses the window's `safeAreaInsets`, which can cause content to shift when the status bar is shown or hidden (since those insets change). To avoid this, implement `navigatorContentInset(_:)` and return insets that remain stable across status bar visibility changes — for example, a top inset large enough to accommodate the maximum expected status bar height.
 
+#### LCP
+
+* Added an initializer parameter for providing a custom device identifier (contributed by [@dewantawsif](https://github.com/readium/swift-toolkit/pull/661)).
+    * You must ensure the identifier is unique and stable for the device (persist and reuse across app launches).
+    * Recommended: generate an app-scoped UUID and store it securely (e.g., in the Keychain); avoid hardware or advertising identifiers.
+
 ### Changed
 
 #### Navigator

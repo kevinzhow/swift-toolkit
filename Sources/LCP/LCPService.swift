@@ -23,13 +23,18 @@ public final class LCPService: Loggable {
 
     /// - Parameter deviceName: Device name used when registering a license to an LSD server.
     ///   If not provided, the device name will be the default `UIDevice.current.name`.
+    /// - Parameter deviceId: Device ID used when registering a license to an LSD server.
+    ///   You must ensure the identifier is unique and stable for the device (persist and
+    ///   reuse across app launches). If not provided, the device ID will be generated as
+    ///   a random UUID.
     public init(
         client: LCPClient,
         licenseRepository: LCPLicenseRepository,
         passphraseRepository: LCPPassphraseRepository,
         assetRetriever: AssetRetriever,
         httpClient: HTTPClient,
-        deviceName: String? = nil
+        deviceName: String? = nil,
+        deviceId: String? = nil
     ) {
         // Determine whether the embedded liblcp.a is in production mode, by attempting to open a production license.
         let isProduction: Bool = {
@@ -50,6 +55,7 @@ public final class LCPService: Loggable {
             crl: CRLService(httpClient: httpClient),
             device: DeviceService(
                 deviceName: deviceName ?? UIDevice.current.name,
+                deviceId: deviceId,
                 repository: licenseRepository,
                 httpClient: httpClient
             ),
