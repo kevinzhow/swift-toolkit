@@ -199,11 +199,12 @@ open class PDFNavigatorViewController:
         super.viewWillTransition(to: size, with: coordinator)
 
         if let pdfView = pdfView {
-            // Makes sure that the PDF is always properly scaled down when
-            // rotating the screen, if the user didn't zoom in.
-            let isAtMinScaleFactor = (pdfView.scaleFactor == pdfView.minScaleFactor)
+            // Makes sure that the PDF is always properly scaled when rotating
+            // the screen, if the user didn't set a custom zoom.
+            let isAtScaleFactor = pdfView.isAtScaleFactor(for: settings.fit)
+
             coordinator.animate(alongsideTransition: { _ in
-                self.updateScaleFactors(zoomToFit: isAtMinScaleFactor)
+                self.updateScaleFactors(zoomToFit: isAtScaleFactor)
 
                 // Reset the PDF view to update the spread if needed.
                 if self.settings.spread == .auto {
@@ -403,7 +404,8 @@ open class PDFNavigatorViewController:
 
     @objc private func visiblePagesDidChange() {
         // In paginated mode, we want to refresh the scale factors to properly
-        // fit the newly visible pages.
+        // fit the newly visible pages. This is especially important for
+        // paginated spreads.
         if !settings.scroll {
             updateScaleFactors(zoomToFit: true)
         }
@@ -489,11 +491,20 @@ open class PDFNavigatorViewController:
         guard let pdfView = pdfView else {
             return
         }
-        pdfView.minScaleFactor = pdfView.scaleFactorForSizeToFit
+
+        let scaleFactorToFit = pdfView.scaleFactor(for: settings.fit)
+
+        if settings.scroll {
+            // Allow zooming out to 25% in scroll mode.
+            pdfView.minScaleFactor = 0.25
+        } else {
+            pdfView.minScaleFactor = scaleFactorToFit
+        }
+
         pdfView.maxScaleFactor = 4.0
 
         if zoomToFit {
-            pdfView.scaleFactor = pdfView.minScaleFactor
+            pdfView.scaleFactor = scaleFactorToFit
         }
     }
 
